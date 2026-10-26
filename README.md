@@ -209,7 +209,26 @@ Execute [`provisioning/sql/02_verification_queries.sql`](provisioning/sql/02_ver
 
 ---
 
-## 5. Repository Structure
+## 5. BigQuery Console Visual Walkthrough
+
+### 1. Policy Tag Taxonomy & Data Masking Policies (`CustomerGovernanceTaxonomy`)
+![BigQuery Policy Tag Taxonomy and Data Policies](docs/screenshots/01_bq_policy_tag_taxonomy.png)
+
+### 2. Custom Salted SHA-256 Masking Routine (`fn_salted_sha256`) & PK/FK Table Schema
+![BigQuery Custom Masking UDF and Relational PK/FK Schema](docs/screenshots/02_bq_custom_masking_udf_and_schema.png)
+
+### 3. Multi-Persona Cross-Table `PK = FK JOIN` Execution Results
+![Multi-Persona Cross-Table Join Execution Comparison](docs/screenshots/03_bq_multi_persona_join_results.png)
+
+### 4. Cryptographic Verification: Unsalted SHA-256 Rainbow Lookup vs. Salted UDF
+![Rainbow Table Lookup vs Custom Salted SHA-256 UDF](docs/screenshots/04_bq_rainbow_table_vs_salted_udf.png)
+
+### 5. Interactive Architecture Blueprint
+![BigQuery Multi-Policy PK/FK Data Masking Architecture Blueprint](docs/screenshots/05_architecture_blueprint.png)
+
+---
+
+## 6. Repository Structure
 
 ```text
 bq-data-policy-lab/
