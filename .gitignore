@@ -32,3 +32,16 @@ npm-debug.log*
 .idea/
 *.swp
 *.swo
+
+# Internal Presenter Notes, Walkthroughs & Agent Scratch Files (NEVER COMMIT)
+customer_email_guide.md
+walkthrough.md
+implementation_plan.md
+task.md
+*email_guide*.md
+*walkthrough*.md
+scratch/
+render_bq_console_screenshots.py
+.agent/
+.gemini/
+.planning/
