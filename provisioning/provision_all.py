@@ -4,7 +4,7 @@
 Provisions in your configured Google Cloud project (default location `us-central1`, dataset `data_policies_example`):
 1. BigQuery Dataset `data_policies_example`
 2. Custom Masking Routine (UDF) `fn_salted_sha256` with `OPTIONS (data_governance_type = 'DATA_MASKING')`
-3. Data Catalog Taxonomy `CustomerGovernanceTaxonomy` and Policy Tags:
+3. BigQuery Governance Policy Tag Taxonomy (Knowledge Catalog) `CustomerGovernanceTaxonomy` and Policy Tags:
    - `Customer_PK_Tag` (applied to PK & FK `customer_id` columns across 4 relational tables)
    - `Customer_PII_Default_Tag` (applied to `email`, `phone_number`, `tax_id`)
    - `Customer_Financial_Default_Tag` (applied to `credit_limit_usd`)
@@ -122,7 +122,7 @@ def api_headers() -> dict[str, str]:
 
 
 def ensure_taxonomy_and_tags(headers: dict[str, str]) -> tuple[str, dict[str, str]]:
-    print("\n[1/6] Ensuring Data Catalog Taxonomy & Policy Tags...")
+    print("\n[1/6] Ensuring BigQuery Governance Policy Tag Taxonomy (Knowledge Catalog) & Policy Tags...")
     parent = f"projects/{PROJECT_ID}/locations/{LOCATION}"
     resp = requests.get(f"{DATACATALOG_API}/{parent}/taxonomies", headers=headers, timeout=30)
     resp.raise_for_status()
@@ -647,7 +647,7 @@ def create_tables_and_seed_data(bq_client: bigquery.Client, tags: dict[str, str]
         bq_client.query(stmt, job_config=job_config).result()
         print(f"  ✓ Executed DDL/DML step {idx}/{len(ddl_statements)}")
 
-    # Attach Data Catalog Policy Tags to columns via SchemaField PolicyTagList
+    # Attach BigQuery Governance Policy Tags (Knowledge Catalog) to columns via SchemaField PolicyTagList
     table_column_tags = {
         "customers": {
             "customer_id": pk_tag,
@@ -731,7 +731,7 @@ def main() -> int:
                 "user_email": ADMIN_EMAIL,
                 "sa_email": PERSONA_SAS["admin"],
                 "title": "Data Governance Admin",
-                "role_label": "Data Catalog Fine-Grained Reader (on Policy Tags)",
+                "role_label": "Fine-Grained Reader (on Policy Tags)",
                 "pk_policy": "RAW_PLAINTEXT (Fine-Grained Reader)",
                 "pk_example": "CUST-1001",
                 "join_capable": True,

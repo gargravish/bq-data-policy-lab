@@ -236,7 +236,7 @@ function populateResourcesList(state, links) {
       url: links.bigquery_dataset,
     },
     {
-      name: "Data Catalog Taxonomy: CustomerGovernanceTaxonomy",
+      name: "BigQuery Governance Policy Tag Taxonomy (Knowledge Catalog): CustomerGovernanceTaxonomy",
       id: state.taxonomy.name,
       url: links.policy_tag_taxonomy,
     },
@@ -288,8 +288,8 @@ function populateImplementationGuide(state, sqlScripts) {
 
   const steps = [
     {
-      title: `Part 1: Provision Data Catalog Taxonomy & Policy Tags (${state.location})`,
-      desc: "Create the fine-grained access control taxonomy CustomerGovernanceTaxonomy and the Customer_PK_Tag policy tag attached to both Primary Key and Foreign Key columns.",
+      title: `Part 1: Provision BigQuery Governance Policy Tag Taxonomy (Knowledge Catalog) & Policy Tags (${state.location})`,
+      desc: "Create the fine-grained access control taxonomy CustomerGovernanceTaxonomy (in BigQuery > Governance > Policy tags) and the Customer_PK_Tag policy tag attached to both Primary Key and Foreign Key columns.",
       code: `cp .env.example .env
 # Edit .env with GOOGLE_CLOUD_PROJECT="${state.project_id}" and your persona principals
 

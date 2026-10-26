@@ -3,7 +3,7 @@
 **Repository:** `https://github.com/gargravish/bq-data-policy-lab`  
 **Default Dataset:** `data_policies_example` (`us-central1`) | **Taxonomy:** `CustomerGovernanceTaxonomy`
 
-This repository provides a **self-contained customer implementation guide, automated idempotent provisioning suite, live multi-persona verification harness, and interactive web workbench** demonstrating how multiple **BigQuery Column-Level Dynamic Data Masking Policies** attached to a single **Data Catalog Policy Tag (`Customer_PK_Tag`)** behave across relational Primary Key (`PK`) and Foreign Key (`FK`) `JOIN`s.
+This repository provides a **self-contained customer implementation guide, automated idempotent provisioning suite, live multi-persona verification harness, and interactive web workbench** demonstrating how multiple **BigQuery Column-Level Dynamic Data Masking Policies** attached to a single **BigQuery Governance Policy Tag (`Customer_PK_Tag`)**—integrated with **Knowledge Catalog (Dataplex)**—behave across relational Primary Key (`PK`) and Foreign Key (`FK`) `JOIN`s.
 
 ---
 
@@ -13,7 +13,7 @@ All personas execute the **exact same SQL queries** against `data_policies_examp
 
 | Persona / Identity | Role & Policy Assignment | What They See on `customer_id` (PK & FK) | Secondary PII (`email`) & Financial (`credit_limit_usd`) | Cross-Table `JOIN` Capability (`customers ⋈ orders`) | Live Row Count |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Persona 1: Data Governance Admin**<br/>(`ADMIN_USER_EMAIL` / `dp-persona-admin` SA) | **Data Catalog Fine-Grained Reader** (`roles/datacatalog.categoryFineGrainedReader`) on Policy Tags | Raw plaintext:<br/>`'CUST-1001'` | `'alice.smith@acme-global.com'`<br/>`$25,000.00` | **Yes** — Evaluates `'CUST-1001' = 'CUST-1001'` | **12 rows** (2-table)<br/>**7 rows** (4-table) |
+| **Persona 1: Data Governance Admin**<br/>(`ADMIN_USER_EMAIL` / `dp-persona-admin` SA) | **Fine-Grained Reader** (`roles/datacatalog.categoryFineGrainedReader`) on Policy Tags | Raw plaintext:<br/>`'CUST-1001'` | `'alice.smith@acme-global.com'`<br/>`$25,000.00` | **Yes** — Evaluates `'CUST-1001' = 'CUST-1001'` | **12 rows** (2-table)<br/>**7 rows** (4-table) |
 | **Persona 2: Lead Data Scientist**<br/>(`ANALYST_USER_EMAIL` / `dp-persona-testuser` SA) | **BigQuery Masked Reader** (`roles/bigquerydatapolicy.maskedReader`) on **Policy 1 (`dp_customer_pk_salted_sha256`)** — Custom Masking Routine (`fn_salted_sha256`, Priority `#1`) | Salted SHA-256 Hex:<br/>`'9e8efd65e632352c...2e6408d4'` | `'XXXXX@acme-global.com'` (`EMAIL_MASK`)<br/>`$25,000.00` | **Yes** — Evaluates `SaltedSHA256 = SaltedSHA256` across all 4 tables; **immune to rainbow-table reversal** | **12 rows** (2-table)<br/>**7 rows** (4-table) |
 | **Persona 3: External Contractor / Auditor**<br/>(`AUDITOR_USER_EMAIL` / `dp-persona-test2` SA) | **BigQuery Masked Reader** on **Policy 2 (`dp_customer_pk_null`, `ALWAYS_NULL`)** on PK + **`DEFAULT_MASKING_VALUE`** on PII/Financial | Obscured:<br/>`NULL` | `""` (empty string)<br/>`0.0` | **No** — Evaluates `NULL = NULL` as `UNKNOWN` in SQL three-valued logic, safely blocking correlation | **0 rows** (2-table)<br/>**0 rows** (4-table) |
 | **Comparison Persona: Unsalted SHA-256**<br/>(`dp-persona-sha256` SA) | **BigQuery Masked Reader** on **Policy 3 (`dp_customer_pk_sha256`, Predefined `SHA256`, Priority `#3`)** | Base64 SHA-256:<br/>`'vzfLri/gZxdYrzVs...AnZvn8='` | `'XXXXX@acme-global.com'`<br/>`0.0` | **Yes**, but **vulnerable to Rainbow Table dictionary lookup** on sequential IDs (`'CUST-1001'`) | **12 rows** (2-table)<br/>**7 rows** (4-table) |
@@ -35,7 +35,7 @@ flowchart LR
     C["dp-persona-conflict<br/>Bound to Policy 1 (#1) + Policy 2 (#9)"]
   end
 
-  subgraph Governance["2. Data Catalog Taxonomy & Data Policies (us-central1)"]
+  subgraph Governance["2. Knowledge Catalog & BigQuery Governance Policy Tags + Data Policies (us-central1)"]
     TAG["Policy Tag: Customer_PK_Tag<br/>(Taxonomy: CustomerGovernanceTaxonomy)"]
     P1["Policy 1: dp_customer_pk_salted_sha256<br/>Priority #1: Custom UDF fn_salted_sha256"]
     P3["Policy 3: dp_customer_pk_sha256<br/>Priority #3: Predefined SHA256"]
@@ -145,12 +145,16 @@ OPTIONS (data_governance_type = 'DATA_MASKING') AS (
 > **Why Custom Salted SHA-256 instead of Predefined `SHA256`?**
 > Predefined `SHA256` computes an unsalted hash (`TO_BASE64(SHA256('CUST-1001'))` = `'vzfLri/gZxdYrzVsm7yJzqs/c6w2hMce+H5eqAnZvn8='`). Because primary keys like `'CUST-1001'` follow a known sequential pattern, any analyst can generate a dictionary CTE of `SHA256('CUST-1001'..'CUST-9999')` and join it against the masked column to reverse every ID. By embedding an enterprise secret pepper inside `fn_salted_sha256`, authorized data scientists receive deterministic hashes that join seamlessly across `customers`, `orders`, `support_tickets`, and `loyalty_ledger` while defeating rainbow-table lookups.
 
-### Part 2: Create Data Catalog Taxonomy, Policy Tags, & BigQuery Data Policies
+### Part 2: Create BigQuery Governance Policy Tag Taxonomy (Knowledge Catalog) & BigQuery Data Policies
+
+> **Important Note on Current Google Cloud Naming vs. Underlying REST/IAM Identifiers:**
+> Standalone **Google Cloud Data Catalog** is deprecated and replaced by **Knowledge Catalog** (formerly *Dataplex Universal Catalog*, managed via `dataplex.googleapis.com/v1`). In the Google Cloud Console, Policy Tag Taxonomies and Data Policies are managed under **`BigQuery > Governance > Policy tags`** (`https://console.cloud.google.com/bigquery/security/secure/policy-tags`).
+> Under the hood, Google Cloud retains the `datacatalog.googleapis.com/v1` service endpoint (`taxonomies` and `policyTags`) and the `roles/datacatalog.categoryAdmin` / `roles/datacatalog.categoryFineGrainedReader` IAM role strings specifically for Policy Tag Taxonomies, while **BigQuery Data Policies** use `bigquerydatapolicy.googleapis.com` (`v1` for policy-tag-bound policies, or `v2` / `CREATE DATA_POLICY` DDL for Resource Manager Data Governance Tags and direct column data policies).
 
 ```bash
 TOKEN=$(gcloud auth print-access-token)
 
-# 1. Create Taxonomy with FINE_GRAINED_ACCESS_CONTROL
+# 1. Create BigQuery Governance Policy Tag Taxonomy with FINE_GRAINED_ACCESS_CONTROL
 curl -s -X POST \
   -H "Authorization: Bearer ${TOKEN}" \
   -H "Content-Type: application/json" \

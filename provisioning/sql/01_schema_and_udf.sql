@@ -5,7 +5,7 @@
 -- Reference: https://cloud.google.com/bigquery/docs/column-data-masking-intro
 -- =============================================================================
 
--- 1. Create Dataset in us-central1 (matching Data Catalog Taxonomy region)
+-- 1. Create Dataset in us-central1 (matching BigQuery Governance Policy Tag Taxonomy / Knowledge Catalog region)
 CREATE SCHEMA IF NOT EXISTS `YOUR_PROJECT_ID.data_policies_example`
 OPTIONS (
   location = 'us-central1',
