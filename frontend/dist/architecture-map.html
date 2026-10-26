@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BigQuery Multi-Policy PK/FK Data Masking Architecture Diagram</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --panel: #111827;
+      --border: rgba(148, 163, 184, 0.22);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    .toolbar-title {
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+    .toolbar-sub {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+    .legend {
+      display: flex;
+      gap: 14px;
+      font-size: 0.76rem;
+      align-items: center;
+    }
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .canvas-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow: auto;
+    }
+    svg {
+      width: 100%;
+      max-width: 1380px;
+      height: auto;
+      border-radius: 14px;
+      background: #0d1322;
+      border: 1px solid var(--border);
+    }
+    .flow-line {
+      stroke-dasharray: 8 6;
+      animation: dash 18s linear infinite;
+    }
+    @keyframes dash {
+      to {
+        stroke-dashoffset: -280;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div>
+      <div class="toolbar-title">BigQuery Column-Level Dynamic Data Masking — Primary &amp; Foreign Key Mesh Architecture</div>
+      <div class="toolbar-sub" id="archSubtitle">Dataset: data_policies_example (us-central1) &bull; Taxonomy: CustomerGovernanceTaxonomy</div>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="dot" style="background:#10b981"></span>Fine-Grained Reader (Plaintext)</span>
+      <span class="legend-item"><span class="dot" style="background:#8b5cf6"></span>Policy 1: Salted SHA-256 UDF (#1)</span>
+      <span class="legend-item"><span class="dot" style="background:#f59e0b"></span>Policy 3: Predefined SHA-256 (#3)</span>
+      <span class="legend-item"><span class="dot" style="background:#f43f5e"></span>Policy 2: ALWAYS_NULL (#9)</span>
+    </div>
+  </div>
+
+  <div class="canvas-wrap">
+    <svg viewBox="0 0 1360 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Architecture diagram of BigQuery multi-policy dynamic data masking on primary and foreign keys">
+      <defs>
+        <marker id="arrowGreen" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
+        </marker>
+        <marker id="arrowPurple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6" />
+        </marker>
+        <marker id="arrowAmber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b" />
+        </marker>
+        <marker id="arrowRose" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e" />
+        </marker>
+        <marker id="arrowBlue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6" />
+        </marker>
+      </defs>
+
+      <!-- Column 1: Caller Personas -->
+      <rect x="24" y="24" width="330" height="672" rx="14" fill="#111827" stroke="#334155" />
+      <text x="44" y="56" fill="#f8fafc" font-size="15" font-weight="700">1. Caller Identities &amp; Personas</text>
+      <text x="44" y="76" fill="#94a3b8" font-size="11">Submit identical SQL JOIN queries to BigQuery</text>
+
+      <!-- Admin Persona -->
+      <rect x="42" y="96" width="294" height="106" rx="10" fill="#064e3b" fill-opacity="0.35" stroke="#10b981" stroke-width="1.5" />
+      <text x="58" y="120" fill="#34d399" font-size="13" font-weight="700" id="svgAdminEmail">Data Governance Admin (Persona 1)</text>
+      <text x="58" y="140" fill="#e2e8f0" font-size="11">Role: Fine-Grained Reader (on Policy Tags)</text>
+      <text x="58" y="160" fill="#a7f3d0" font-size="11" font-family="monospace">Sees PK/FK: 'CUST-1001'</text>
+      <text x="58" y="180" fill="#10b981" font-size="11" font-weight="600">JOIN Result: 12 Rows ('CUST-1001' = 'CUST-1001')</text>
+
+      <!-- Testuser Persona -->
+      <rect x="42" y="218" width="294" height="116" rx="10" fill="#3b0764" fill-opacity="0.35" stroke="#8b5cf6" stroke-width="1.5" />
+      <text x="58" y="242" fill="#c4b5fd" font-size="13" font-weight="700" id="svgAnalystEmail">Lead Data Scientist (Persona 2)</text>
+      <text x="58" y="262" fill="#e2e8f0" font-size="11">Role: Masked Reader on Policy 1 (Salted UDF)</text>
+      <text x="58" y="282" fill="#ddd6fe" font-size="11" font-family="monospace">Sees PK/FK: '9e8efd65e632...08d4'</text>
+      <text x="58" y="302" fill="#a78bfa" font-size="11" font-weight="600">JOIN Result: 12 Rows (SaltedHash = SaltedHash)</text>
+      <text x="58" y="320" fill="#34d399" font-size="10">✓ Immune to Rainbow Table Lookup</text>
+
+      <!-- Test2 Persona -->
+      <rect x="42" y="350" width="294" height="116" rx="10" fill="#4c0519" fill-opacity="0.35" stroke="#f43f5e" stroke-width="1.5" />
+      <text x="58" y="374" fill="#fda4af" font-size="13" font-weight="700" id="svgAuditorEmail">External Ops Auditor (Persona 3)</text>
+      <text x="58" y="394" fill="#e2e8f0" font-size="11">Role: Masked Reader on Policy 2 (ALWAYS_NULL)</text>
+      <text x="58" y="414" fill="#fecdd3" font-size="11" font-family="monospace">Sees PK/FK: NULL | PII: "" | Fin: 0.0</text>
+      <text x="58" y="434" fill="#fb7185" font-size="11" font-weight="600">JOIN Result: 0 Rows (NULL = NULL is UNKNOWN)</text>
+      <text x="58" y="452" fill="#fda4af" font-size="10">✓ Safely Blocks Cross-Table Correlation</text>
+
+      <!-- Comparison Personas (SHA256, DefaultPK, Conflict) -->
+      <rect x="42" y="482" width="294" height="194" rx="10" fill="#1e293b" stroke="#64748b" stroke-width="1.2" />
+      <text x="58" y="506" fill="#fbbf24" font-size="12" font-weight="700">Comparison &amp; Edge-Case Personas</text>
+      <text x="58" y="530" fill="#e2e8f0" font-size="11" font-weight="600">• dp-persona-sha256 (Predefined SHA256 #3):</text>
+      <text x="68" y="546" fill="#cbd5e1" font-size="10">Sees Base64 'vzfLri/g...' — Joins work, but Rainbow-vulnerable</text>
+      <text x="58" y="572" fill="#f59e0b" font-size="11" font-weight="600">• dp-persona-defaultpk (DEFAULT_MASKING #8):</text>
+      <text x="68" y="588" fill="#cbd5e1" font-size="10">Sees '' on PK/FK — Triggers 96-row (8×12) Cartesian Explosion!</text>
+      <text x="58" y="614" fill="#a78bfa" font-size="11" font-weight="600">• dp-persona-conflict (Policy 1 + Policy 2):</text>
+      <text x="68" y="630" fill="#cbd5e1" font-size="10">BigQuery 9-Tier Hierarchy selects Priority #1 (Salted UDF)</text>
+      <text x="68" y="646" fill="#cbd5e1" font-size="10">over Priority #9 (ALWAYS_NULL) -> 12 Rows Returned</text>
+
+      <!-- Column 2: Data Catalog Policy Tag & Data Policies -->
+      <rect x="420" y="24" width="430" height="672" rx="14" fill="#111827" stroke="#334155" />
+      <text x="440" y="56" fill="#f8fafc" font-size="15" font-weight="700">2. Data Catalog Taxonomy &amp; Data Policies</text>
+      <text x="440" y="76" fill="#94a3b8" font-size="11">Taxonomy: CustomerGovernanceTaxonomy (us-central1)</text>
+
+      <!-- Central Policy Tag Box -->
+      <rect x="444" y="96" width="382" height="68" rx="10" fill="#1e3a8a" fill-opacity="0.45" stroke="#3b82f6" stroke-width="2" />
+      <text x="462" y="122" fill="#93c5fd" font-size="14" font-weight="700">Policy Tag: Customer_PK_Tag</text>
+      <text x="462" y="144" fill="#cbd5e1" font-size="11">Attached to customer_id (PK &amp; FK) across all 4 tables</text>
+
+      <!-- Data Policy 1 -->
+      <rect x="444" y="186" width="382" height="106" rx="10" fill="#2e1065" fill-opacity="0.45" stroke="#8b5cf6" stroke-width="1.5" />
+      <text x="462" y="210" fill="#c4b5fd" font-size="13" font-weight="700">Policy 1: dp_customer_pk_salted_sha256 (Priority #1)</text>
+      <text x="462" y="230" fill="#e2e8f0" font-size="11">Rule: Custom Masking Routine (DATA_MASKING UDF)</text>
+      <text x="462" y="250" fill="#ddd6fe" font-size="10" font-family="monospace">fn_salted_sha256(val) -> SHA256(val || SECRET_PEPPER)</text>
+      <text x="462" y="272" fill="#a78bfa" font-size="11">Bound to: Lead Data Scientist (Persona 2), dp-persona-conflict</text>
+
+      <!-- Data Policy 3 -->
+      <rect x="444" y="308" width="382" height="86" rx="10" fill="#451a03" fill-opacity="0.4" stroke="#f59e0b" stroke-width="1.5" />
+      <text x="462" y="332" fill="#fcd34d" font-size="13" font-weight="700">Policy 3: dp_customer_pk_sha256 (Priority #3)</text>
+      <text x="462" y="352" fill="#e2e8f0" font-size="11">Rule: Predefined SHA256 -> TO_BASE64(SHA256(val))</text>
+      <text x="462" y="374" fill="#fbbf24" font-size="11">Bound to: dp-persona-sha256 (Rainbow Comparison)</text>
+
+      <!-- Data Policy 4 -->
+      <rect x="444" y="410" width="382" height="86" rx="10" fill="#451a03" fill-opacity="0.3" stroke="#d97706" stroke-width="1.2" />
+      <text x="462" y="434" fill="#fdba74" font-size="13" font-weight="700">Policy 4: dp_customer_pk_default (Priority #8)</text>
+      <text x="462" y="454" fill="#e2e8f0" font-size="11">Rule: Predefined DEFAULT_MASKING_VALUE -> ""</text>
+      <text x="462" y="476" fill="#fb923c" font-size="11">Bound to: dp-persona-defaultpk (Cartesian Anti-Pattern Demo)</text>
+
+      <!-- Data Policy 2 -->
+      <rect x="444" y="512" width="382" height="86" rx="10" fill="#4c0519" fill-opacity="0.45" stroke="#f43f5e" stroke-width="1.5" />
+      <text x="462" y="536" fill="#fda4af" font-size="13" font-weight="700">Policy 2: dp_customer_pk_null (Priority #9)</text>
+      <text x="462" y="556" fill="#e2e8f0" font-size="11">Rule: Predefined ALWAYS_NULL -> NULL</text>
+      <text x="462" y="578" fill="#fb7185" font-size="11">Bound to: External Ops Auditor (Persona 3), dp-persona-conflict</text>
+
+      <!-- Secondary PII & Financial Tags -->
+      <rect x="444" y="612" width="382" height="66" rx="10" fill="#0f172a" stroke="#475569" />
+      <text x="462" y="636" fill="#93c5fd" font-size="12" font-weight="700">Secondary Tags: Customer_PII_Default_Tag &amp; Financial_Tag</text>
+      <text x="462" y="656" fill="#cbd5e1" font-size="11">Enforces EMAIL_MASK ('XXXXX@domain') &amp; DEFAULT_MASKING_VALUE ('', 0.0)</text>
+
+      <!-- Column 3: Relational Tables in BigQuery -->
+      <rect x="916" y="24" width="420" height="672" rx="14" fill="#111827" stroke="#334155" />
+      <text x="936" y="56" fill="#f8fafc" font-size="15" font-weight="700">3. Relational Mesh Tables (BigQuery)</text>
+      <text x="936" y="76" fill="#94a3b8" font-size="11" id="svgDatasetLabel">Dataset: data_policies_example (us-central1)</text>
+
+      <!-- Table 1: customers -->
+      <rect x="936" y="100" width="380" height="130" rx="10" fill="#0f172a" stroke="#3b82f6" stroke-width="2" />
+      <text x="954" y="126" fill="#60a5fa" font-size="14" font-weight="700">Table: customers (8 Master Rows)</text>
+      <text x="954" y="148" fill="#34d399" font-size="11" font-family="monospace">🔑 PK: customer_id [Customer_PK_Tag]</text>
+      <text x="954" y="168" fill="#cbd5e1" font-size="11" font-family="monospace">🔒 email, phone_number, tax_id [PII_Default_Tag]</text>
+      <text x="954" y="188" fill="#cbd5e1" font-size="11" font-family="monospace">🔒 credit_limit_usd [Financial_Default_Tag]</text>
+      <text x="954" y="208" fill="#94a3b8" font-size="11" font-family="monospace">📊 customer_name, signup_country, loyalty_tier</text>
+
+      <!-- Table 2: orders -->
+      <rect x="936" y="256" width="380" height="114" rx="10" fill="#0f172a" stroke="#8b5cf6" stroke-width="1.5" />
+      <text x="954" y="282" fill="#c4b5fd" font-size="14" font-weight="700">Table: orders (12 Fact Rows)</text>
+      <text x="954" y="304" fill="#e2e8f0" font-size="11" font-family="monospace">🔑 PK: order_id</text>
+      <text x="954" y="324" fill="#34d399" font-size="11" font-family="monospace">🔗 FK: customer_id [Customer_PK_Tag]</text>
+      <text x="954" y="344" fill="#94a3b8" font-size="11" font-family="monospace">📊 order_amount, order_status, product_category</text>
+
+      <!-- Table 3: support_tickets -->
+      <rect x="936" y="394" width="380" height="114" rx="10" fill="#0f172a" stroke="#38bdf8" stroke-width="1.5" />
+      <text x="954" y="420" fill="#7dd3fc" font-size="14" font-weight="700">Table: support_tickets (6 SLA Rows)</text>
+      <text x="954" y="442" fill="#e2e8f0" font-size="11" font-family="monospace">🔑 PK: ticket_id</text>
+      <text x="954" y="462" fill="#34d399" font-size="11" font-family="monospace">🔗 FK: customer_id [Customer_PK_Tag]</text>
+      <text x="954" y="482" fill="#94a3b8" font-size="11" font-family="monospace">📊 order_id, issue_category, priority</text>
+
+      <!-- Table 4: loyalty_ledger -->
+      <rect x="936" y="532" width="380" height="114" rx="10" fill="#0f172a" stroke="#10b981" stroke-width="1.5" />
+      <text x="954" y="558" fill="#6ee7b7" font-size="14" font-weight="700">Table: loyalty_ledger (8 Ledger Rows)</text>
+      <text x="954" y="580" fill="#e2e8f0" font-size="11" font-family="monospace">🔑 PK: ledger_id</text>
+      <text x="954" y="600" fill="#34d399" font-size="11" font-family="monospace">🔗 FK: customer_id [Customer_PK_Tag]</text>
+      <text x="954" y="620" fill="#94a3b8" font-size="11" font-family="monospace">📊 points_delta, event_type, partner_program</text>
+
+      <!-- Animated Flow Connectors -->
+      <path d="M 336 140 L 440 130" stroke="#10b981" stroke-width="2.2" fill="none" class="flow-line" marker-end="url(#arrowGreen)" />
+      <path d="M 336 270 L 440 240" stroke="#8b5cf6" stroke-width="2.2" fill="none" class="flow-line" marker-end="url(#arrowPurple)" />
+      <path d="M 336 408 L 440 550" stroke="#f43f5e" stroke-width="2.2" fill="none" class="flow-line" marker-end="url(#arrowRose)" />
+      <path d="M 336 540 L 440 350" stroke="#f59e0b" stroke-width="1.8" fill="none" class="flow-line" marker-end="url(#arrowAmber)" />
+
+      <!-- Policy Tag to PK/FK Columns -->
+      <path d="M 826 130 L 932 145" stroke="#3b82f6" stroke-width="2.2" fill="none" class="flow-line" marker-end="url(#arrowBlue)" />
+      <path d="M 826 240 L 932 320" stroke="#8b5cf6" stroke-width="2" fill="none" class="flow-line" marker-end="url(#arrowPurple)" />
+      <path d="M 826 240 L 932 458" stroke="#8b5cf6" stroke-width="2" fill="none" class="flow-line" marker-end="url(#arrowPurple)" />
+      <path d="M 826 240 L 932 596" stroke="#8b5cf6" stroke-width="2" fill="none" class="flow-line" marker-end="url(#arrowPurple)" />
+    </svg>
+  </div>
+</body>
+</html>

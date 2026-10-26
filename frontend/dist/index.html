@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BigQuery Dynamic Data Masking on Primary &amp; Foreign Keys | Live Governance Workbench</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <!-- Left Navigation Rail -->
+    <aside class="nav-rail" id="navRail" aria-label="Primary Navigation">
+      <div class="rail-header">
+        <div class="brand-mark">BQ</div>
+        <div class="brand-text">
+          <span class="brand-title">Data Policy Lab</span>
+          <span class="brand-subtitle">PK / FK Masking Mesh</span>
+        </div>
+        <button type="button" class="rail-toggle-btn" id="railToggleBtn" title="Toggle Navigation Rail" aria-label="Toggle Navigation Rail">
+          &#9776;
+        </button>
+      </div>
+
+      <nav class="rail-nav">
+        <button type="button" class="nav-item active" data-tab="workbench">
+          <span class="nav-icon">&#9889;</span>
+          <span class="nav-label">Live PK/FK Join Workbench</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="matrix">
+          <span class="nav-icon">&#128737;</span>
+          <span class="nav-label">Access Matrix &amp; 9-Tier Rules</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="crypto">
+          <span class="nav-icon">&#128272;</span>
+          <span class="nav-label">Salted SHA-256 vs. Rainbow Lab</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="architecture">
+          <span class="nav-icon">&#128506;</span>
+          <span class="nav-label">Architecture Diagram</span>
+        </button>
+        <button type="button" class="nav-item" data-tab="guide">
+          <span class="nav-icon">&#128214;</span>
+          <span class="nav-label">Implementation Guide &amp; SQL</span>
+        </button>
+      </nav>
+
+      <div class="rail-footer">
+        <div class="env-badge">
+          <span class="status-dot"></span>
+          <div class="env-details">
+            <div class="env-project" id="railProject">your-gcp-project-id</div>
+            <div class="env-dataset" id="railDataset">data_policies_example (us-central1)</div>
+          </div>
+        </div>
+        <div class="console-links-box" id="railConsoleLinks"></div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <div class="main-workspace">
+      <!-- Top Executive Banner -->
+      <header class="top-bar">
+        <div class="top-bar-left">
+          <div class="eyebrow-chips">
+            <span class="chip chip-blue">LIVE BIGQUERY EXECUTION</span>
+            <span class="chip chip-emerald">DATA CATALOG POLICY TAGS</span>
+            <span class="chip chip-purple">CUSTOM UDF: fn_salted_sha256</span>
+          </div>
+          <h1 class="page-title">Multiple Dynamic Masking Policies on a Relational Primary &amp; Foreign Key</h1>
+          <p class="page-subtitle">
+            Proving how a single Policy Tag (<code>Customer_PK_Tag</code>) simultaneously enforces Plaintext Access, Deterministic Salted SHA-256 Joins, and Nullify Join-Blocking across 4 relational tables.
+          </p>
+        </div>
+        <div class="top-bar-actions">
+          <button type="button" class="btn btn-secondary" id="themeToggleBtn">Light / Dark</button>
+          <button type="button" class="btn btn-secondary" id="openSqlModalBtn">View Live SQL &amp; UDF</button>
+        </div>
+      </header>
+
+      <!-- KPI Summary Bar -->
+      <section class="kpi-strip" aria-label="Provisioned Governance Telemetry">
+        <div class="kpi-card">
+          <div class="kpi-label">Policy Tag Taxonomy</div>
+          <div class="kpi-value" id="kpiTaxonomy">CustomerGovernanceTaxonomy</div>
+          <div class="kpi-meta">3 Policy Tags &bull; <code>us-central1</code></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Active Data Policies</div>
+          <div class="kpi-value" id="kpiPolicies">7 Live Policies</div>
+          <div class="kpi-meta">4 on <code>Customer_PK_Tag</code> &bull; 3 on PII/Financial</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Relational Mesh Tables</div>
+          <div class="kpi-value">4 PK / FK Tables</div>
+          <div class="kpi-meta"><code>customers</code> &bowtie; <code>orders</code> &bowtie; <code>tickets</code> &bowtie; <code>loyalty</code></div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label">Live Verification Status</div>
+          <div class="kpi-value kpi-pass" id="kpiVerification">24 / 24 Checks Passed</div>
+          <div class="kpi-meta">6 Impersonated Personas Verified in BigQuery</div>
+        </div>
+      </section>
+
+      <!-- TAB 1: LIVE PK/FK JOIN WORKBENCH -->
+      <main class="tab-panel active" id="tab-workbench">
+        <div class="workbench-controls card">
+          <div class="control-row">
+            <div class="control-group">
+              <label for="querySelect" class="control-label">1. Select Relational Query Scenario</label>
+              <select id="querySelect" class="select-input"></select>
+            </div>
+
+            <div class="control-group">
+              <label for="personaSelect" class="control-label">2. Active Caller Persona (Single-Persona Mode)</label>
+              <select id="personaSelect" class="select-input"></select>
+            </div>
+
+            <div class="control-group control-group-small">
+              <label for="tierSelect" class="control-label">3. Loyalty Tier Filter (<code>@loyalty_tier</code>)</label>
+              <select id="tierSelect" class="select-input">
+                <option value="ALL">ALL TIERS</option>
+                <option value="PLATINUM">PLATINUM</option>
+                <option value="GOLD">GOLD</option>
+                <option value="SILVER">SILVER</option>
+              </select>
+            </div>
+
+            <div class="control-actions">
+              <button type="button" class="btn btn-primary" id="runSingleBtn">
+                Run as Selected Persona
+              </button>
+              <button type="button" class="btn btn-accent" id="runCompareAllBtn">
+                Compare All Personas Live in BigQuery
+              </button>
+            </div>
+          </div>
+
+          <div class="query-insight-banner" id="queryInsightBanner"></div>
+        </div>
+
+        <!-- Active SQL Provenance Bar -->
+        <div class="sql-preview-bar card">
+          <div class="sql-preview-header">
+            <span class="sql-badge">IDENTICAL SQL SUBMITTED BY ALL PERSONAS</span>
+            <span class="sql-note">Zero query rewrites required — BigQuery dynamically injects policy-tag masking rules at query execution time based on caller IAM identity.</span>
+          </div>
+          <pre class="code-block" id="activeSqlCode"></pre>
+        </div>
+
+        <!-- Execution Output Container -->
+        <div id="workbenchResultsContainer" class="results-container"></div>
+      </main>
+
+      <!-- TAB 2: ACCESS MATRIX & 9-TIER HIERARCHY -->
+      <section class="tab-panel" id="tab-matrix">
+        <div class="card section-card">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Executive Access Matrix &amp; Persona Design</h2>
+              <p class="section-desc">
+                All six identities query the exact same tables in <code id="matrixDatasetLabel">data_policies_example</code>. BigQuery evaluates the caller's IAM bindings on <code>Customer_PK_Tag</code>, <code>Customer_PII_Default_Tag</code>, and <code>Customer_Financial_Default_Tag</code> before executing any <code>JOIN</code> or <code>GROUP BY</code> predicate.
+              </p>
+            </div>
+          </div>
+          <div class="table-scroll-container">
+            <table class="data-table" id="personaMatrixTable">
+              <thead>
+                <tr>
+                  <th>Persona / Identity</th>
+                  <th>Role &amp; Policy Assignment</th>
+                  <th>What They See on <code>customer_id</code> (PK &amp; FK)</th>
+                  <th>Secondary PII &amp; Financial Masking</th>
+                  <th>Cross-Table Join Capability</th>
+                  <th>2-Table Join Rows</th>
+                </tr>
+              </thead>
+              <tbody id="personaMatrixBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-2col">
+          <div class="card section-card">
+            <h2 class="section-title">BigQuery 9-Tier Masking Rule Priority Hierarchy</h2>
+            <p class="section-desc">
+              When a single principal (such as <code>dp-persona-conflict</code>) belongs to multiple Google Groups or holds <code>roles/bigquerydatapolicy.maskedReader</code> on multiple Data Policies attached to the same Policy Tag, BigQuery deterministically resolves the conflict using this 9-tier priority order:
+            </p>
+            <div class="table-scroll-container">
+              <table class="data-table" id="hierarchyTable">
+                <thead>
+                  <tr>
+                    <th>Priority</th>
+                    <th>Masking Rule</th>
+                    <th>API Expression</th>
+                    <th>Status in Demo</th>
+                    <th>Architectural Behavior</th>
+                  </tr>
+                </thead>
+                <tbody id="hierarchyTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card section-card">
+            <h2 class="section-title">Provisioned Cloud Resources &amp; Console Deep Links</h2>
+            <p class="section-desc">
+              Every resource below is live in your configured Google Cloud project (<code id="resourcesProjectLabel">us-central1</code>). Click any resource to inspect it directly in the Google Cloud Console:
+            </p>
+            <div id="provisionedResourcesList" class="resource-cards-stack"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: SALTED SHA-256 VS RAINBOW LAB -->
+      <section class="tab-panel" id="tab-crypto">
+        <div class="grid-2col">
+          <div class="card section-card">
+            <span class="chip chip-emerald">CRYPTOGRAPHIC DEEP DIVE</span>
+            <h2 class="section-title">Why Custom Salted SHA-256 Beats Predefined SHA256 on Primary Keys</h2>
+            <p class="section-desc">
+              Enterprise primary keys follow predictable formats such as <code>'CUST-1001'</code>..<code>'CUST-9999'</code> or sequential integers. When masked with predefined <code>SHA256</code>, an analyst can compute <code>TO_BASE64(SHA256('CUST-1001'))</code> in a CTE and join it against the masked column to de-anonymize every customer record in milliseconds.
+            </p>
+            <div class="callout callout-success">
+              <strong>The Solution — Custom Masking Routine (Priority #1):</strong>
+              By creating a GoogleSQL UDF with <code>OPTIONS (data_governance_type = 'DATA_MASKING')</code> that concatenates an enterprise secret pepper inside the routine body, analysts with <code>maskedReader</code> can still join <code>customers.customer_id = orders.customer_id</code> because both columns evaluate to the exact same deterministic salted digest, yet dictionary attacks fail completely.
+            </div>
+            <pre class="code-block" id="cryptoUdfCode">CREATE OR REPLACE FUNCTION `YOUR_PROJECT_ID.data_policies_example.fn_salted_sha256`(val STRING)
+RETURNS STRING
+OPTIONS (data_governance_type = 'DATA_MASKING') AS (
+  CAST(SHA256(CONCAT(val, 'REPLACE_WITH_YOUR_ENTERPRISE_SECRET_PEPPER_2026')) AS STRING FORMAT 'HEX')
+);</pre>
+            <div class="action-bar-inline">
+              <button type="button" class="btn btn-accent" id="runRainbowLabBtn">
+                Execute Live Rainbow Table Attack Comparison in BigQuery
+              </button>
+            </div>
+          </div>
+
+          <div class="card section-card">
+            <span class="chip chip-amber">RELATIONAL ANTI-PATTERN ALERT</span>
+            <h2 class="section-title">Why <code>ALWAYS_NULL</code> Must Be Used Instead of <code>DEFAULT_MASKING_VALUE</code> on Join Keys</h2>
+            <p class="section-desc">
+              For external auditors or restricted roles that should not join tables on <code>customer_id</code>, choosing between <code>ALWAYS_NULL</code> and <code>DEFAULT_MASKING_VALUE</code> is critical:
+            </p>
+            <ul class="CleanList">
+              <li>
+                <strong><code>ALWAYS_NULL</code> on <code>customer_id</code> (Safe Join Blocker):</strong>
+                Replaces every PK and FK with <code>NULL</code>. In SQL three-valued logic, <code>NULL = NULL</code> evaluates to <code>UNKNOWN</code>, so <code>customers JOIN orders ON c.customer_id = o.customer_id</code> safely returns <strong>0 rows</strong>.
+              </li>
+              <li>
+                <strong><code>DEFAULT_MASKING_VALUE</code> on Secondary PII/Financial Columns (Safe Value Scrubber):</strong>
+                Replaces <code>STRING</code> columns (email, phone, tax_id) with <code>""</code> and numeric columns (<code>credit_limit_usd</code>) with <code>0.0</code> so single-table queries remain type-compatible without null-pointer failures.
+              </li>
+              <li>
+                <strong><code>DEFAULT_MASKING_VALUE</code> on a Join Key (Dangerous Anti-Pattern):</strong>
+                If applied to <code>customer_id</code> (`dp-persona-defaultpk`), every customer PK becomes <code>""</code> and every order FK becomes <code>""</code>. Since <code>"" = ""</code> is <code>TRUE</code>, an 8-row customer table joined with a 12-row order table explodes into <strong>96 corrupted rows (8 &times; 12 Cartesian product)</strong>!
+              </li>
+            </ul>
+            <div class="action-bar-inline">
+              <button type="button" class="btn btn-primary" id="runCartesianLabBtn">
+                Compare ALWAYS_NULL (0 Rows) vs. DEFAULT_MASKING_VALUE (96 Rows) Live
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="cryptoLabResults" class="results-container"></div>
+      </section>
+
+      <!-- TAB 4: INTERACTIVE ARCHITECTURE DIAGRAM -->
+      <section class="tab-panel" id="tab-architecture">
+        <div class="card section-card arch-frame-card">
+          <div class="section-header">
+            <div>
+              <h2 class="section-title">Interactive Architecture Blueprint: Policy Tag &amp; Multi-Policy Join Topology</h2>
+              <p class="section-desc">
+                Interactive SVG architecture map illustrating how Data Catalog Taxonomy <code>CustomerGovernanceTaxonomy</code>, the 7 Data Policies, and the 4 relational tables interact at query runtime.
+              </p>
+            </div>
+            <a href="/architecture-map.html" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+              Open Fullscreen Diagram &#8599;
+            </a>
+          </div>
+          <iframe src="/architecture-map.html" class="arch-iframe" title="BigQuery Multi-Policy Data Masking Architecture Diagram"></iframe>
+        </div>
+      </section>
+
+      <!-- TAB 5: SELF-CONTAINED IMPLEMENTATION GUIDE & SQL -->
+      <section class="tab-panel" id="tab-guide">
+        <div class="card section-card">
+          <h2 class="section-title">Self-Contained Implementation Guide (CLI, REST API &amp; GoogleSQL)</h2>
+          <p class="section-desc">
+            Complete step-by-step runbook to reproduce or extend this architecture in any Google Cloud project.
+          </p>
+          <div id="implementationGuideContainer" class="guide-sections"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Native Dialog for Live SQL & UDF Inspection -->
+  <dialog id="sqlModal" class="modal-dialog">
+    <div class="modal-header">
+      <h3 class="modal-title">Provisioned GoogleSQL DDL, Custom Masking Routine &amp; Verification Queries</h3>
+      <button type="button" class="btn btn-secondary" id="closeSqlModalBtn">Close</button>
+    </div>
+    <div class="modal-body">
+      <h4 class="modal-subtitle">1. <code>provisioning/sql/01_schema_and_udf.sql</code></h4>
+      <pre class="code-block" id="modalSchemaSql"></pre>
+      <h4 class="modal-subtitle">2. <code>provisioning/sql/02_verification_queries.sql</code></h4>
+      <pre class="code-block" id="modalVerifySql"></pre>
+    </div>
+  </dialog>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

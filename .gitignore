@@ -1,0 +1,34 @@
+# Local Environment & Secrets (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+
+# Generated Provisioning & Live Verification State (Environment-Specific)
+provisioning/provisioned_state.json
+provisioning/live_verification_report.json
+
+# Python Bytecode & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Frontend Build Caches
+node_modules/
+*.log
+npm-debug.log*
+
+# OS & Editor Metadata
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.vscode/
+.idea/
+*.swp
+*.swo
